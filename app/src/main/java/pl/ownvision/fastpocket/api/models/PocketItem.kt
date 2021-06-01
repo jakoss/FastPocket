@@ -48,15 +48,6 @@ data class PocketItemDto(
     // TODO : add rest of the fields
 )
 
-@Serializable
-enum class FavoriteState {
-    @SerialName("1")
-    Favorited,
-
-    @SerialName("0")
-    NotFavorited
-}
-
 object BooleanAsIntSerializer : KSerializer<Boolean> {
     override fun deserialize(decoder: Decoder): Boolean {
         val originalValue = decoder.decodeString()

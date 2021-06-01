@@ -13,8 +13,10 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import pl.ownvision.fastpocket.api.models.PocketItemDto
 import pl.ownvision.fastpocket.infrastructure.settings.AuthorizationSettings
+import timber.log.Timber
 
 data class PocketItemsListState(
     val items: Async<List<PocketItemDto>> = Uninitialized,
@@ -53,10 +55,26 @@ class PocketItemsListViewModel @AssistedInject constructor(
             .launchIn(viewModelScope)
     }
 
+    fun archivePocketItem(pocketItemDto: PocketItemDto) {
+        viewModelScope.launch {
+            try {
+                val currentItems = awaitState().items() ?: return@launch
+                setState { copy(items = Success(currentItems.filterNot { it.itemId == pocketItemDto.itemId })) }
+                pocketRepository.archivePocketItem(pocketItemDto)
+                loadPocketItems()
+                // TODO : display success status
+                // TODO : animate item dissmissal (is that possible?)
+            } catch (ex: Throwable) {
+                // TODO : handle error properly
+                Timber.e(ex)
+            }
+        }
+    }
+
     private fun loadPocketItems() {
         suspend {
             pocketRepository.getPocketItems()
-        }.execute { copy(items = it) }
+        }.execute(retainValue = PocketItemsListState::items) { copy(items = it) }
     }
 
     @BindType(

@@ -17,4 +17,8 @@ interface PocketApi {
     @POST("/v3/get")
     @Headers("X-Accept: application/json")
     suspend fun getPocketItems(@Body request: PocketItemsRequestDto): PocketItemsResponseDto
+
+    @POST("/v3/send")
+    @Headers("X-Accept: application/json")
+    suspend fun modifyPocketItems(@Body request: ModifyPocketItemsRequest)
 }

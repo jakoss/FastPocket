@@ -91,25 +91,24 @@ fun LoginScreen() {
 
 @Composable
 fun PocketItemsScreen(pocketItems: Async<List<PocketItemDto>>) {
-    when (pocketItems) {
-        Uninitialized, is Loading -> {
-            FullscreenLoader()
-        }
-        is Success -> {
-            val items = pocketItems()
-
+    val currentPocketItems = pocketItems()
+    when {
+        currentPocketItems != null -> {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
             ) {
-                itemsIndexed(items) { index, item ->
+                itemsIndexed(currentPocketItems) { index, item ->
                     PocketItem(item)
-                    if (index < items.size - 1) {
+                    if (index < currentPocketItems.size - 1) {
                         Divider()
                     }
                 }
             }
         }
-        is Fail -> {
+        pocketItems is Uninitialized || pocketItems is Loading -> {
+            FullscreenLoader()
+        }
+        pocketItems is Fail -> {
             Text("Error: ${pocketItems.error}")
         }
     }
@@ -125,10 +124,15 @@ fun PocketItem(
     )
 ) {
     val context = LocalContext.current
+    val title = if (pocketItem.resolvedTitle.isNotBlank()) {
+        pocketItem.resolvedTitle
+    } else {
+        pocketItem.givenTitle
+    }
 
     SwipeHandler(pocketItem = pocketItem) {
         ListItem(
-            text = { Text(text = pocketItem.resolvedTitle) },
+            text = { Text(text = title) },
             secondaryText = pocketItem.excerpt?.let {
                 { Text(text = pocketItem.excerpt, maxLines = 2, overflow = TextOverflow.Ellipsis) }
             },
@@ -171,13 +175,14 @@ fun PocketItem(
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SwipeHandler(pocketItem: PocketItemDto, content: @Composable RowScope.() -> Unit) {
-    val context = LocalContext.current
+    val viewModel: PocketItemsListViewModel = mavericksViewModel()
+
     val dismissState = rememberDismissState(
         confirmStateChange = {
             if (it == DismissValue.DismissedToStart) {
-                // TODO : delete entry
-                // TODO : handle favorite
-                Toast.makeText(context, "Swipe on: ${pocketItem.itemId}", Toast.LENGTH_LONG).show()
+                viewModel.archivePocketItem(pocketItem)
+            } else if (it == DismissValue.DismissedToEnd) {
+                // TODO : handle favorite change
             }
             false
         }

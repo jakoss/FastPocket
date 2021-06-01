@@ -2,6 +2,8 @@ package pl.ownvision.fastpocket.list
 
 import pl.ownvision.fastpocket.BuildConfig
 import pl.ownvision.fastpocket.api.PocketApi
+import pl.ownvision.fastpocket.api.models.ModifyAction
+import pl.ownvision.fastpocket.api.models.ModifyPocketItemsRequest
 import pl.ownvision.fastpocket.api.models.PocketItemDto
 import pl.ownvision.fastpocket.api.models.PocketItemsRequestDto
 import pl.ownvision.fastpocket.infrastructure.settings.AuthorizationSettings
@@ -20,5 +22,19 @@ class PocketRepository @Inject constructor(
                 }
             )
         ).list.values.toList()
+    }
+
+    suspend fun archivePocketItem(pocketItemDto: PocketItemDto) {
+        pocketApi.modifyPocketItems(
+            ModifyPocketItemsRequest(
+                BuildConfig.CONSUMER_KEY,
+                requireNotNull(authorizationSettings.accessToken.read()) {
+                    "Access token not provided"
+                },
+                listOf(
+                    ModifyAction("archive", itemId = pocketItemDto.itemId)
+                )
+            )
+        )
     }
 }
