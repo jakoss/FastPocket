@@ -42,6 +42,9 @@ data class PocketItemDto(
     val favorite: Boolean,
     @SerialName("top_image_url")
     val topImageUrl: String? = null,
+    val excerpt: String? = null,
+    @SerialName("time_to_read")
+    val timeToRead: Int? = null
     // TODO : add rest of the fields
 )
 

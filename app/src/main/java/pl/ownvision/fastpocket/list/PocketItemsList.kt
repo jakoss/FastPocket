@@ -35,7 +35,10 @@ class PocketItemsListViewModel @AssistedInject constructor(
         authorizationSettings.accessToken.listen()
             .onEach {
                 val currentAccessToken = awaitState().accessToken
-                if (it == currentAccessToken()) return@onEach
+                if (it == currentAccessToken()) {
+                    setState { copy(accessToken = Success(it)) }
+                    return@onEach
+                }
 
                 if (it != null) {
                     loadPocketItems()
