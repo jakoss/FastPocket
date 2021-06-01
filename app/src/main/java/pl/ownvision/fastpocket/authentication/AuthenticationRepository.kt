@@ -6,6 +6,7 @@ import pl.ownvision.fastpocket.api.models.AuthorizeRequest
 import pl.ownvision.fastpocket.api.models.AuthorizeResponse
 import pl.ownvision.fastpocket.api.models.GetRequestTokenRequestDto
 import pl.ownvision.fastpocket.api.models.GetRequestTokenResponseDto
+import timber.log.Timber
 import javax.inject.Inject
 
 class AuthenticationRepository @Inject constructor(private val pocketApi: PocketApi) {

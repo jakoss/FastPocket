@@ -1,12 +1,14 @@
 buildscript {
+    @Suppress("UNUSED_VARIABLE") val composeVersion by extra("1.0.0-beta07")
+    val hiltVersion by extra("2.36")
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:7.0.0-beta02")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.0")
-        classpath("com.google.dagger:hilt-android-gradle-plugin:2.35.1")
+        classpath("com.android.tools.build:gradle:7.0.0-beta03")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.32")
+        classpath("com.google.dagger:hilt-android-gradle-plugin:$hiltVersion")
     }
 }
 

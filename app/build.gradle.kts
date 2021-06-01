@@ -4,7 +4,7 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("kotlin-kapt")
-    kotlin("plugin.serialization") version "1.5.0"
+    kotlin("plugin.serialization") version "1.4.32"
     id("dagger.hilt.android.plugin")
 }
 
@@ -22,8 +22,10 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         val properties = gradleLocalProperties(project.rootDir)
-        val consumerKey = requireNotNull(properties.getProperty("consumer_key")) { "Missing consumer_key in local.properties" }
-        val redirectUrl = requireNotNull(properties.getProperty("redirect_url")) { "Missing redirect_url in local.properties" }
+        val consumerKey =
+            requireNotNull(properties.getProperty("consumer_key")) { "Missing consumer_key in local.properties" }
+        val redirectUrl =
+            requireNotNull(properties.getProperty("redirect_url")) { "Missing redirect_url in local.properties" }
         buildConfigField("String", "CONSUMER_KEY", "\"$consumerKey\"")
         buildConfigField("String", "REDIRECT_URL", "\"$redirectUrl\"")
     }
@@ -42,22 +44,32 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = rootProject.extra["composeVersion"] as String
+    }
 }
 
 dependencies {
+    implementation("androidx.appcompat:appcompat:1.3.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
 
-    implementation("androidx.core:core-ktx:1.5.0")
-    implementation("androidx.appcompat:appcompat:1.3.0")
-    implementation("com.google.android.material:material:1.3.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.0.4")
+    // Compose and AppCompat
+    implementation("androidx.activity:activity-compose:1.3.0-alpha08")
+    implementation("androidx.compose.ui:ui:${rootProject.extra["composeVersion"]}")
+    implementation("androidx.compose.material:material:${rootProject.extra["composeVersion"]}")
+    implementation("androidx.compose.ui:ui-tooling:${rootProject.extra["composeVersion"]}")
+
+    implementation("androidx.core:core-ktx:1.6.0-beta01")
     implementation("androidx.datastore:datastore:1.0.0-beta01")
     implementation("androidx.datastore:datastore-preferences:1.0.0-beta01")
+    implementation("com.google.android.material:material:1.3.0")
 
     // Dagger / Hilt
-    val hiltVersion = "2.35.1"
-    implementation("com.google.dagger:hilt-android:$hiltVersion")
-    kapt("com.google.dagger:hilt-android-compiler:$hiltVersion")
+    implementation("com.google.dagger:hilt-android:${rootProject.extra["hiltVersion"]}")
+    kapt("com.google.dagger:hilt-android-compiler:${rootProject.extra["hiltVersion"]}")
 
     // Hilt binder
     val hiltBinderVersion = "1.0.0"
