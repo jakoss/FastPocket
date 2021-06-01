@@ -1,8 +1,12 @@
 package pl.ownvision.fastpocket.list
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,11 +14,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -116,38 +126,103 @@ fun PocketItem(
 ) {
     val context = LocalContext.current
 
-    ListItem(
-        text = { Text(text = pocketItem.resolvedTitle) },
-        secondaryText = pocketItem.excerpt?.let {
-            { Text(text = pocketItem.excerpt, maxLines = 2, overflow = TextOverflow.Ellipsis) }
+    SwipeHandler(pocketItem = pocketItem) {
+        ListItem(
+            text = { Text(text = pocketItem.resolvedTitle) },
+            secondaryText = pocketItem.excerpt?.let {
+                { Text(text = pocketItem.excerpt, maxLines = 2, overflow = TextOverflow.Ellipsis) }
+            },
+            overlineText = pocketItem.timeToRead?.let {
+                val minutes = pocketItem.timeToRead
+                {
+                    Text(
+                        text = context.resources.getQuantityString(
+                            R.plurals.minutes,
+                            minutes,
+                            minutes
+                        )
+                    )
+                }
+            },
+            icon = pocketItem.topImageUrl?.let {
+                {
+                    Image(
+                        painter = rememberCoilPainter(request = it),
+                        contentDescription = null,
+                        Modifier
+                            .size(64.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                    )
+                }
+            },
+            modifier = Modifier
+                .clickable {
+                    // TODO : open url in external browser (option)
+                    val customTabsIntent = CustomTabsIntent
+                        .Builder()
+                        .build()
+                    customTabsIntent.launchUrl(context, pocketItem.givenUrl.toUri())
+                }
+                .padding(vertical = 4.dp)
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun SwipeHandler(pocketItem: PocketItemDto, content: @Composable RowScope.() -> Unit) {
+    val context = LocalContext.current
+    val dismissState = rememberDismissState(
+        confirmStateChange = {
+            if (it == DismissValue.DismissedToStart) {
+                // TODO : delete entry
+                // TODO : handle favorite
+                Toast.makeText(context, "Swipe on: ${pocketItem.itemId}", Toast.LENGTH_LONG).show()
+            }
+            false
+        }
+    )
+    SwipeToDismiss(
+        state = dismissState,
+        modifier = Modifier.padding(vertical = 4.dp),
+        dismissThresholds = {
+            FractionalThreshold(0.33f)
         },
-        overlineText = pocketItem.timeToRead?.let {
-            val minutes = pocketItem.timeToRead
-            {
-                Text(
-                    text = context.resources.getQuantityString(R.plurals.minutes, minutes, minutes)
+        background = {
+            val direction = dismissState.dismissDirection ?: return@SwipeToDismiss
+            val color by animateColorAsState(
+                when (dismissState.targetValue) {
+                    DismissValue.DismissedToEnd -> Color.Green
+                    DismissValue.DismissedToStart -> Color.Red
+                    DismissValue.Default -> Color.LightGray
+                }
+            )
+            val alignment = when (direction) {
+                DismissDirection.StartToEnd -> Alignment.CenterStart
+                DismissDirection.EndToStart -> Alignment.CenterEnd
+            }
+            val icon = when (direction) {
+                DismissDirection.StartToEnd -> Icons.Default.Star
+                DismissDirection.EndToStart -> Icons.Default.Delete
+            }
+            val scale by animateFloatAsState(
+                if (dismissState.targetValue == DismissValue.Default) 0.75f else 1f
+            )
+
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(color)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = alignment
+            ) {
+                Icon(
+                    icon,
+                    contentDescription = null, // TODO : localise content description
+                    modifier = Modifier.scale(scale)
                 )
             }
         },
-        icon = pocketItem.topImageUrl?.let {
-            {
-                Image(
-                    painter = rememberCoilPainter(request = it),
-                    contentDescription = null,
-                    Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                )
-            }
-        },
-        modifier = Modifier
-            .clickable {
-                // TODO : open url in external browser (option)
-                val customTabsIntent = CustomTabsIntent
-                    .Builder()
-                    .build()
-                customTabsIntent.launchUrl(context, pocketItem.givenUrl.toUri())
-            }
-            .padding(vertical = 4.dp)
+        dismissContent = content
     )
 }
