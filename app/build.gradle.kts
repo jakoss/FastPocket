@@ -32,7 +32,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -67,6 +67,12 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0-beta01")
     implementation("com.google.android.material:material:1.3.0")
 
+    // Accompanist
+    val accompanistVersion = "0.10.0"
+    implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
+    implementation("com.google.accompanist:accompanist-insets:$accompanistVersion")
+    implementation("com.google.accompanist:accompanist-coil:$accompanistVersion")
+
     // Dagger / Hilt
     implementation("com.google.dagger:hilt-android:${rootProject.extra["hiltVersion"]}")
     kapt("com.google.dagger:hilt-android-compiler:${rootProject.extra["hiltVersion"]}")
@@ -87,6 +93,7 @@ dependencies {
 
     // Mavericks
     implementation("com.airbnb.android:mavericks:2.3.0")
+    implementation("com.airbnb.android:mavericks-compose:2.1.0-alpha02")
 
     // Logging
     implementation("com.jakewharton.timber:timber:4.7.1")

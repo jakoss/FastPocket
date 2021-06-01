@@ -38,7 +38,8 @@ fun FastPocketTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Compos
     MaterialTheme(
         colors = colors,
         typography = Typography,
-        shapes = Shapes,
-        content = content
-    )
+        shapes = Shapes
+    ) {
+        content()
+    }
 }
