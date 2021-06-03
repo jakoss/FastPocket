@@ -30,6 +30,16 @@ android {
         buildConfigField("String", "REDIRECT_URL", "\"$redirectUrl\"")
     }
 
+    signingConfigs {
+        create("localApkSigning") {
+            val properties = gradleLocalProperties(project.rootDir)
+            storeFile = File(properties.getProperty("storeFilePath"))
+            storePassword = properties.getProperty("storePassword")
+            keyPassword = properties.getProperty("keyPassword")
+            keyAlias = properties.getProperty("keyAlias")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -37,6 +47,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("localApkSigning")
+        }
+        debug {
+            signingConfig = signingConfigs.getByName("localApkSigning")
         }
     }
     compileOptions {
@@ -57,18 +71,18 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
 
     // Compose and AppCompat
-    implementation("androidx.activity:activity-compose:1.3.0-alpha08")
+    implementation("androidx.activity:activity-compose:1.3.0-beta01")
     implementation("androidx.compose.ui:ui:${rootProject.extra["composeVersion"]}")
     implementation("androidx.compose.material:material:${rootProject.extra["composeVersion"]}")
     implementation("androidx.compose.ui:ui-tooling:${rootProject.extra["composeVersion"]}")
 
-    implementation("androidx.core:core-ktx:1.6.0-beta01")
+    implementation("androidx.core:core-ktx:1.6.0-beta02")
     implementation("androidx.datastore:datastore:1.0.0-beta01")
     implementation("androidx.datastore:datastore-preferences:1.0.0-beta01")
     implementation("com.google.android.material:material:1.3.0")
 
     // Accompanist
-    val accompanistVersion = "0.10.0"
+    val accompanistVersion = "0.11.1"
     implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-insets:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-coil:$accompanistVersion")
@@ -78,7 +92,7 @@ dependencies {
     kapt("com.google.dagger:hilt-android-compiler:${rootProject.extra["hiltVersion"]}")
 
     // Hilt binder
-    val hiltBinderVersion = "1.0.0"
+    val hiltBinderVersion = "1.1.0"
     implementation("com.paulrybitskyi:hilt-binder:$hiltBinderVersion")
     kapt("com.paulrybitskyi:hilt-binder-compiler:$hiltBinderVersion")
 
@@ -111,7 +125,7 @@ dependencies {
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:0.8.0")
 
     // Niddler (network traffic inspector inside Android Studio)
-    val niddlerVersion = "1.5.3"
+    val niddlerVersion = "1.5.4"
     debugImplementation("com.chimerapps.niddler:niddler:$niddlerVersion")
     releaseImplementation("com.chimerapps.niddler:niddler-noop:$niddlerVersion")
 

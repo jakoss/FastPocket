@@ -181,6 +181,7 @@ fun SwipeHandler(pocketItem: PocketItemDto, content: @Composable RowScope.() -> 
         confirmStateChange = {
             if (it == DismissValue.DismissedToStart) {
                 viewModel.archivePocketItem(pocketItem)
+                // TODO : move action methods up the stack
             } else if (it == DismissValue.DismissedToEnd) {
                 // TODO : handle favorite change
             }
@@ -191,7 +192,7 @@ fun SwipeHandler(pocketItem: PocketItemDto, content: @Composable RowScope.() -> 
         state = dismissState,
         modifier = Modifier.padding(vertical = 4.dp),
         dismissThresholds = {
-            FractionalThreshold(0.33f)
+            FractionalThreshold(0.25f)
         },
         background = {
             val direction = dismissState.dismissDirection ?: return@SwipeToDismiss
@@ -199,7 +200,7 @@ fun SwipeHandler(pocketItem: PocketItemDto, content: @Composable RowScope.() -> 
                 when (dismissState.targetValue) {
                     DismissValue.DismissedToEnd -> Color.Green
                     DismissValue.DismissedToStart -> Color.Red
-                    DismissValue.Default -> Color.LightGray
+                    DismissValue.Default -> Color.Transparent
                 }
             )
             val alignment = when (direction) {
