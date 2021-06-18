@@ -71,7 +71,7 @@ class PocketItemsListViewModel @AssistedInject constructor(
         }
     }
 
-    private fun loadPocketItems() {
+    fun loadPocketItems() {
         suspend {
             pocketRepository.getPocketItems()
         }.execute(retainValue = PocketItemsListState::items) { copy(items = it) }

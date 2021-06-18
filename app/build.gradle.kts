@@ -4,7 +4,7 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("kotlin-kapt")
-    kotlin("plugin.serialization") version "1.4.32"
+    kotlin("plugin.serialization") version "1.5.10"
     id("dagger.hilt.android.plugin")
 }
 
@@ -71,21 +71,22 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
 
     // Compose and AppCompat
-    implementation("androidx.activity:activity-compose:1.3.0-beta01")
+    implementation("androidx.activity:activity-compose:1.3.0-beta02")
     implementation("androidx.compose.ui:ui:${rootProject.extra["composeVersion"]}")
     implementation("androidx.compose.material:material:${rootProject.extra["composeVersion"]}")
     implementation("androidx.compose.ui:ui-tooling:${rootProject.extra["composeVersion"]}")
 
-    implementation("androidx.core:core-ktx:1.6.0-beta02")
-    implementation("androidx.datastore:datastore:1.0.0-beta01")
-    implementation("androidx.datastore:datastore-preferences:1.0.0-beta01")
+    implementation("androidx.core:core-ktx:1.6.0-rc01")
+    implementation("androidx.datastore:datastore:1.0.0-beta02")
+    implementation("androidx.datastore:datastore-preferences:1.0.0-beta02")
     implementation("com.google.android.material:material:1.3.0")
 
     // Accompanist
-    val accompanistVersion = "0.11.1"
+    val accompanistVersion = "0.12.0"
     implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-insets:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-coil:$accompanistVersion")
+    implementation("com.google.accompanist:accompanist-swiperefresh:$accompanistVersion")
 
     // Dagger / Hilt
     implementation("com.google.dagger:hilt-android:${rootProject.extra["hiltVersion"]}")
@@ -113,7 +114,7 @@ dependencies {
     implementation("com.jakewharton.timber:timber:4.7.1")
 
     // Image handling
-    implementation("io.coil-kt:coil:1.2.1")
+    implementation("io.coil-kt:coil:1.2.2")
 
     // Networking
     api(platform("com.squareup.okhttp3:okhttp-bom:4.9.1"))

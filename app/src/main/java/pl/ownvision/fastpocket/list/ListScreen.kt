@@ -1,7 +1,6 @@
 package pl.ownvision.fastpocket.list
 
 import android.content.Intent
-import android.widget.Toast
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -10,13 +9,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -34,6 +31,8 @@ import com.airbnb.mvrx.*
 import com.airbnb.mvrx.compose.collectAsState
 import com.airbnb.mvrx.compose.mavericksViewModel
 import com.google.accompanist.coil.rememberCoilPainter
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import pl.ownvision.fastpocket.R
 import pl.ownvision.fastpocket.api.models.PocketItemDto
 import pl.ownvision.fastpocket.authentication.AuthenticationActivity
@@ -91,16 +90,23 @@ fun LoginScreen() {
 
 @Composable
 fun PocketItemsScreen(pocketItems: Async<List<PocketItemDto>>) {
+    val viewModel: PocketItemsListViewModel = mavericksViewModel()
     val currentPocketItems = pocketItems()
     when {
         currentPocketItems != null -> {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                itemsIndexed(currentPocketItems) { index, item ->
-                    PocketItem(item)
-                    if (index < currentPocketItems.size - 1) {
-                        Divider()
+            SwipeRefresh(
+                state = rememberSwipeRefreshState(isRefreshing = pocketItems is Loading),
+                onRefresh = {
+                    viewModel.loadPocketItems()
+                }) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    itemsIndexed(currentPocketItems) { index, item ->
+                        PocketItem(item)
+                        if (index < currentPocketItems.size - 1) {
+                            Divider()
+                        }
                     }
                 }
             }
