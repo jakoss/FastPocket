@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.navigation.NavController
 import com.airbnb.mvrx.*
 import com.airbnb.mvrx.compose.collectAsState
 import com.airbnb.mvrx.compose.mavericksViewModel
@@ -40,14 +42,21 @@ import pl.ownvision.fastpocket.infrastructure.ui.theme.FastPocketTheme
 import pl.ownvision.fastpocket.infrastructure.ui.utility.FullscreenLoader
 
 @Composable
-fun ListScreen() {
+fun ListScreen(navController: NavController) {
     val viewModel: PocketItemsListViewModel = mavericksViewModel()
     val state by viewModel.collectAsState()
     FastPocketTheme {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(text = "Fast Pocket") }
+                    title = { Text(text = "Fast Pocket") },
+                    actions = {
+                        IconButton(onClick = {
+                            navController.navigate("settings")
+                        }) {
+                            Icon(imageVector = Icons.Filled.Settings, contentDescription = null)
+                        }
+                    }
                 )
             },
             content = {
@@ -57,7 +66,16 @@ fun ListScreen() {
                     }
                     is Success -> {
                         if (state.userAuthorized) {
-                            PocketItemsScreen(state.items)
+                            PocketItemsScreen(
+                                state.items,
+                                reloadItems = {
+                                    viewModel.loadPocketItems()
+                                },
+                                archiveItemAction = { pocketItem ->
+                                    viewModel.archivePocketItem(pocketItem)
+                                },
+                                state.useExternalBrowser
+                            )
                         } else {
                             LoginScreen()
                         }
@@ -89,21 +107,29 @@ fun LoginScreen() {
 }
 
 @Composable
-fun PocketItemsScreen(pocketItems: Async<List<PocketItemDto>>) {
-    val viewModel: PocketItemsListViewModel = mavericksViewModel()
+fun PocketItemsScreen(
+    pocketItems: Async<List<PocketItemDto>>,
+    reloadItems: () -> Unit,
+    archiveItemAction: (PocketItemDto) -> Unit,
+    useExternalBrowser: Boolean
+) {
     val currentPocketItems = pocketItems()
     when {
         currentPocketItems != null -> {
             SwipeRefresh(
                 state = rememberSwipeRefreshState(isRefreshing = pocketItems is Loading),
                 onRefresh = {
-                    viewModel.loadPocketItems()
+                    reloadItems()
                 }) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     itemsIndexed(currentPocketItems) { index, item ->
-                        PocketItem(item)
+                        PocketItem(
+                            pocketItem = item,
+                            useExternalBrowser = useExternalBrowser,
+                            archiveItemAction = archiveItemAction
+                        )
                         if (index < currentPocketItems.size - 1) {
                             Divider()
                         }
@@ -127,7 +153,9 @@ fun PocketItemsScreen(pocketItems: Async<List<PocketItemDto>>) {
 fun PocketItem(
     pocketItem: PocketItemDto = PocketItemDto(
         "", "", "", "", "", "Test Title", false, null, "Very long except text", 3
-    )
+    ),
+    useExternalBrowser: Boolean = false,
+    archiveItemAction: (PocketItemDto) -> Unit = {}
 ) {
     val context = LocalContext.current
     val title = if (pocketItem.resolvedTitle.isNotBlank()) {
@@ -136,7 +164,7 @@ fun PocketItem(
         pocketItem.givenTitle
     }
 
-    SwipeHandler(pocketItem = pocketItem) {
+    SwipeHandler(pocketItem = pocketItem, archiveItemAction = archiveItemAction) {
         ListItem(
             text = { Text(text = title) },
             secondaryText = pocketItem.excerpt?.let {
@@ -167,11 +195,19 @@ fun PocketItem(
             },
             modifier = Modifier
                 .clickable {
-                    // TODO : open url in external browser (option)
-                    val customTabsIntent = CustomTabsIntent
-                        .Builder()
-                        .build()
-                    customTabsIntent.launchUrl(context, pocketItem.givenUrl.toUri())
+                    if (useExternalBrowser) {
+                        context.startActivity(
+                            Intent(
+                                Intent.ACTION_VIEW,
+                                pocketItem.givenUrl.toUri()
+                            )
+                        )
+                    } else {
+                        val customTabsIntent = CustomTabsIntent
+                            .Builder()
+                            .build()
+                        customTabsIntent.launchUrl(context, pocketItem.givenUrl.toUri())
+                    }
                 }
                 .padding(vertical = 4.dp)
         )
@@ -180,13 +216,15 @@ fun PocketItem(
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun SwipeHandler(pocketItem: PocketItemDto, content: @Composable RowScope.() -> Unit) {
-    val viewModel: PocketItemsListViewModel = mavericksViewModel()
-
+fun SwipeHandler(
+    pocketItem: PocketItemDto,
+    archiveItemAction: (PocketItemDto) -> Unit,
+    content: @Composable RowScope.() -> Unit
+) {
     val dismissState = rememberDismissState(
         confirmStateChange = {
             if (it == DismissValue.DismissedToStart) {
-                viewModel.archivePocketItem(pocketItem)
+                archiveItemAction(pocketItem)
                 // TODO : move action methods up the stack
             } else if (it == DismissValue.DismissedToEnd) {
                 // TODO : handle favorite change

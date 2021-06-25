@@ -15,12 +15,14 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import pl.ownvision.fastpocket.api.models.PocketItemDto
+import pl.ownvision.fastpocket.infrastructure.settings.ApplicationSettings
 import pl.ownvision.fastpocket.infrastructure.settings.AuthorizationSettings
 import timber.log.Timber
 
 data class PocketItemsListState(
     val items: Async<List<PocketItemDto>> = Uninitialized,
     val accessToken: Async<String?> = Uninitialized,
+    val useExternalBrowser: Boolean = false,
 ) : MavericksState {
     val userAuthorized: Boolean
         get() = accessToken() != null
@@ -30,6 +32,7 @@ class PocketItemsListViewModel @AssistedInject constructor(
     @Assisted state: PocketItemsListState,
     private val pocketRepository: PocketRepository,
     authorizationSettings: AuthorizationSettings,
+    private val applicationSettings: ApplicationSettings,
 ) :
     BaseMavericksViewModel<PocketItemsListState>(state) {
 
@@ -53,6 +56,9 @@ class PocketItemsListViewModel @AssistedInject constructor(
                 setState { copy(accessToken = Fail(it)) }
             }
             .launchIn(viewModelScope)
+
+        applicationSettings.useExternalBrowser.listen()
+            .setOnEach { copy(useExternalBrowser = it) }
     }
 
     fun archivePocketItem(pocketItemDto: PocketItemDto) {

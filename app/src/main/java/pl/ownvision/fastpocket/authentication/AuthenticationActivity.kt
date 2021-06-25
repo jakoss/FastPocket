@@ -18,12 +18,13 @@ class AuthenticationActivity : AppCompatActivity(), MavericksView {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val customTabsIntent = CustomTabsIntent.Builder()
+            .build()
+
         viewModel.onAsync(AuthenticationState::requestCode, deliveryMode = uniqueOnly()) { code ->
             val authorizationUrl =
                 "https://getpocket.com/auth/authorize?request_token=${code}&redirect_uri=${BuildConfig.REDIRECT_URL}"
 
-            val customTabsIntent = CustomTabsIntent.Builder()
-                .build()
             customTabsIntent.launchUrl(this@AuthenticationActivity, authorizationUrl.toUri())
         }
 

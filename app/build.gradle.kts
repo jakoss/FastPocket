@@ -4,7 +4,7 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("kotlin-kapt")
-    kotlin("plugin.serialization") version "1.5.10"
+    kotlin("plugin.serialization") version "1.5.20"
     id("dagger.hilt.android.plugin")
 }
 
@@ -74,12 +74,14 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.3.0-beta02")
     implementation("androidx.compose.ui:ui:${rootProject.extra["composeVersion"]}")
     implementation("androidx.compose.material:material:${rootProject.extra["composeVersion"]}")
+    implementation("androidx.compose.material:material-icons-extended:${rootProject.extra["composeVersion"]}")
     implementation("androidx.compose.ui:ui-tooling:${rootProject.extra["composeVersion"]}")
 
     implementation("androidx.core:core-ktx:1.6.0-rc01")
     implementation("androidx.datastore:datastore:1.0.0-beta02")
     implementation("androidx.datastore:datastore-preferences:1.0.0-beta02")
     implementation("com.google.android.material:material:1.3.0")
+    implementation("androidx.navigation:navigation-compose:2.4.0-alpha03")
 
     // Accompanist
     val accompanistVersion = "0.12.0"
