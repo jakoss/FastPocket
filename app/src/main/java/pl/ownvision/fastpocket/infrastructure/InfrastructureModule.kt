@@ -56,6 +56,7 @@ object InfrastructureModule {
     @Singleton
     fun provideSerializationFormat() = Json {
         ignoreUnknownKeys = true
+        classDiscriminator = "status"
     }
 
     @OptIn(ExperimentalSerializationApi::class)

@@ -15,25 +15,28 @@ data class PocketItemsRequestDto(
     val consumerKey: String,
     @SerialName("access_token")
     val accessToken: String,
+    val since: Long?,
+    val detailType: String,
     // TODO : add rest of the fields
 )
 
 @Serializable
 data class PocketItemsResponseDto(
-    val list: Map<String, PocketItemDto>,
+    val list: Map<String, PocketItemWrapperDto>,
+    val since: Long,
     // TODO : add rest of the fields
 )
 
 @Serializable
-data class PocketItemDto(
+sealed class PocketItemWrapperDto
+
+@Serializable
+@SerialName("0")
+data class PocketItemDtoDto(
     @SerialName("item_id")
     val itemId: String,
-    @SerialName("resolved_id")
-    val resolvedId: String,
     @SerialName("given_url")
     val givenUrl: String,
-    @SerialName("resolved_url")
-    val resolvedUrl: String,
     @SerialName("given_title")
     val givenTitle: String,
     @SerialName("resolved_title")
@@ -44,8 +47,30 @@ data class PocketItemDto(
     val topImageUrl: String? = null,
     val excerpt: String? = null,
     @SerialName("time_to_read")
-    val timeToRead: Int? = null
+    val timeToRead: Int? = null,
+    val image: ImageDto? = null,
     // TODO : add rest of the fields
+) : PocketItemWrapperDto()
+
+@Serializable
+@SerialName("1")
+data class PocketItemArchiveDto(
+    @SerialName("item_id")
+    val itemId: String,
+)
+
+@Serializable
+@SerialName("2")
+data class PocketItemDeleteDto(
+    @SerialName("item_id")
+    val itemId: String,
+)
+
+@Serializable
+data class ImageDto(
+    @SerialName("item_id")
+    val itemId: String,
+    val src: String,
 )
 
 object BooleanAsIntSerializer : KSerializer<Boolean> {

@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarOutline
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -29,14 +30,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
+import coil.compose.rememberImagePainter
 import com.airbnb.mvrx.*
 import com.airbnb.mvrx.compose.collectAsState
 import com.airbnb.mvrx.compose.mavericksViewModel
-import com.google.accompanist.coil.rememberCoilPainter
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import pl.ownvision.fastpocket.R
-import pl.ownvision.fastpocket.api.models.PocketItemDto
+import pl.ownvision.fastpocket.api.models.PocketItemDtoDto
 import pl.ownvision.fastpocket.authentication.AuthenticationActivity
 import pl.ownvision.fastpocket.infrastructure.ui.theme.FastPocketTheme
 import pl.ownvision.fastpocket.infrastructure.ui.utility.FullscreenLoader
@@ -66,16 +67,7 @@ fun ListScreen(navController: NavController) {
                     }
                     is Success -> {
                         if (state.userAuthorized) {
-                            PocketItemsScreen(
-                                state.items,
-                                reloadItems = {
-                                    viewModel.loadPocketItems()
-                                },
-                                archiveItemAction = { pocketItem ->
-                                    viewModel.archivePocketItem(pocketItem)
-                                },
-                                state.useExternalBrowser
-                            )
+                            PocketItemsScreen()
                         } else {
                             LoginScreen()
                         }
@@ -107,28 +99,29 @@ fun LoginScreen() {
 }
 
 @Composable
-fun PocketItemsScreen(
-    pocketItems: Async<List<PocketItemDto>>,
-    reloadItems: () -> Unit,
-    archiveItemAction: (PocketItemDto) -> Unit,
-    useExternalBrowser: Boolean
-) {
+fun PocketItemsScreen() {
+    val viewModel: PocketItemsListViewModel = mavericksViewModel()
+    val state by viewModel.collectAsState()
+    val pocketItems = state.items
     val currentPocketItems = pocketItems()
     when {
         currentPocketItems != null -> {
             SwipeRefresh(
-                state = rememberSwipeRefreshState(isRefreshing = pocketItems is Loading),
+                state = rememberSwipeRefreshState(isRefreshing = state.manualRefresh),
                 onRefresh = {
-                    reloadItems()
+                    viewModel.loadPocketItems(manualRefresh = true)
                 }) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    itemsIndexed(currentPocketItems) { index, item ->
+                    itemsIndexed(currentPocketItems, key = { _, item ->
+                        item.itemId
+                    }) { index, item ->
                         PocketItem(
                             pocketItem = item,
-                            useExternalBrowser = useExternalBrowser,
-                            archiveItemAction = archiveItemAction
+                            useExternalBrowser = state.useExternalBrowser,
+                            archiveItemAction = { viewModel.archivePocketItem(item.itemId) },
+                            swapFavoriteStatus = { viewModel.swapFavoriteStatus(item.itemId) },
                         )
                         if (index < currentPocketItems.size - 1) {
                             Divider()
@@ -151,11 +144,12 @@ fun PocketItemsScreen(
 @Preview
 @Composable
 fun PocketItem(
-    pocketItem: PocketItemDto = PocketItemDto(
-        "", "", "", "", "", "Test Title", false, null, "Very long except text", 3
+    pocketItem: PocketItemDtoDto = PocketItemDtoDto(
+        "", "", "", "Test Title", true, null, "Very long except text", null
     ),
     useExternalBrowser: Boolean = false,
-    archiveItemAction: (PocketItemDto) -> Unit = {}
+    archiveItemAction: () -> Unit = {},
+    swapFavoriteStatus: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val title = if (pocketItem.resolvedTitle.isNotBlank()) {
@@ -164,15 +158,32 @@ fun PocketItem(
         pocketItem.givenTitle
     }
 
-    SwipeHandler(pocketItem = pocketItem, archiveItemAction = archiveItemAction) {
+    val image = pocketItem.topImageUrl ?: pocketItem.image?.src
+
+    SwipeHandler(
+        swipeLeftAction = { archiveItemAction() },
+        swipeRightAction = { swapFavoriteStatus() }
+    ) {
         ListItem(
             text = { Text(text = title) },
             secondaryText = pocketItem.excerpt?.let {
                 { Text(text = pocketItem.excerpt, maxLines = 2, overflow = TextOverflow.Ellipsis) }
             },
-            overlineText = pocketItem.timeToRead?.let {
-                val minutes = pocketItem.timeToRead
-                {
+            overlineText = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Filled.StarOutline,
+                        contentDescription = null,
+                        tint = if (pocketItem.favorite) {
+                            Color(0xFFF6B74F)
+                        } else {
+                            Color.Unspecified
+                        },
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    val minutes = pocketItem.timeToRead ?: 1
                     Text(
                         text = context.resources.getQuantityString(
                             R.plurals.minutes,
@@ -182,10 +193,15 @@ fun PocketItem(
                     )
                 }
             },
-            icon = pocketItem.topImageUrl?.let {
+            icon = image?.let {
                 {
                     Image(
-                        painter = rememberCoilPainter(request = it),
+                        painter = rememberImagePainter(
+                            data = it,
+                            builder = {
+                                crossfade(true)
+                            }
+                        ),
                         contentDescription = null,
                         Modifier
                             .size(64.dp)
@@ -217,17 +233,16 @@ fun PocketItem(
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SwipeHandler(
-    pocketItem: PocketItemDto,
-    archiveItemAction: (PocketItemDto) -> Unit,
+    swipeLeftAction: () -> Unit,
+    swipeRightAction: () -> Unit,
     content: @Composable RowScope.() -> Unit
 ) {
     val dismissState = rememberDismissState(
         confirmStateChange = {
             if (it == DismissValue.DismissedToStart) {
-                archiveItemAction(pocketItem)
-                // TODO : move action methods up the stack
+                swipeLeftAction()
             } else if (it == DismissValue.DismissedToEnd) {
-                // TODO : handle favorite change
+                swipeRightAction()
             }
             false
         }

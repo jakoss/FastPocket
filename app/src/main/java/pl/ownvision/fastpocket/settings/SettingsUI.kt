@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,11 +44,11 @@ fun SettingsScreen(applicationSettings: ApplicationSettings, navController: NavC
 fun SettingsList(applicationSettings: ApplicationSettings) {
     val coroutineScope = rememberCoroutineScope()
     Column(modifier = Modifier.padding(16.dp)) {
-        val useExternalBrowserState =
-            applicationSettings.useExternalBrowser
-                .listen()
-                .collectAsState(initial = false)
-        SwitchPreferenceEntry(checked = useExternalBrowserState.value) {
+        val useExternalBrowserState by applicationSettings
+            .useExternalBrowser
+            .listen()
+            .collectAsState(initial = false)
+        SwitchPreferenceEntry(checked = useExternalBrowserState) {
             coroutineScope.launch {
                 applicationSettings.useExternalBrowser.write(it)
             }

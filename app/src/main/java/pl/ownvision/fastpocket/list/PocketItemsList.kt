@@ -1,11 +1,6 @@
 package pl.ownvision.fastpocket.list
 
 import com.airbnb.mvrx.*
-import pl.ownvision.fastpocket.infrastructure.mavericks.AssistedViewModelFactory
-import pl.ownvision.fastpocket.infrastructure.mavericks.BaseMavericksViewModel
-import pl.ownvision.fastpocket.infrastructure.mavericks.MavericksViewModelComponent
-import pl.ownvision.fastpocket.infrastructure.mavericks.ViewModelKey
-import pl.ownvision.fastpocket.infrastructure.mavericks.hiltMavericksViewModelFactory
 import com.paulrybitskyi.hiltbinder.BindType
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -14,15 +9,17 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import pl.ownvision.fastpocket.api.models.PocketItemDto
+import pl.ownvision.fastpocket.api.models.PocketItemDtoDto
+import pl.ownvision.fastpocket.infrastructure.mavericks.*
 import pl.ownvision.fastpocket.infrastructure.settings.ApplicationSettings
 import pl.ownvision.fastpocket.infrastructure.settings.AuthorizationSettings
 import timber.log.Timber
 
 data class PocketItemsListState(
-    val items: Async<List<PocketItemDto>> = Uninitialized,
+    val items: Async<List<PocketItemDtoDto>> = Uninitialized,
     val accessToken: Async<String?> = Uninitialized,
     val useExternalBrowser: Boolean = false,
+    val manualRefresh: Boolean = false,
 ) : MavericksState {
     val userAuthorized: Boolean
         get() = accessToken() != null
@@ -32,7 +29,7 @@ class PocketItemsListViewModel @AssistedInject constructor(
     @Assisted state: PocketItemsListState,
     private val pocketRepository: PocketRepository,
     authorizationSettings: AuthorizationSettings,
-    private val applicationSettings: ApplicationSettings,
+    applicationSettings: ApplicationSettings,
 ) :
     BaseMavericksViewModel<PocketItemsListState>(state) {
 
@@ -61,15 +58,14 @@ class PocketItemsListViewModel @AssistedInject constructor(
             .setOnEach { copy(useExternalBrowser = it) }
     }
 
-    fun archivePocketItem(pocketItemDto: PocketItemDto) {
+    fun archivePocketItem(itemId: String) {
         viewModelScope.launch {
             try {
                 val currentItems = awaitState().items() ?: return@launch
-                setState { copy(items = Success(currentItems.filterNot { it.itemId == pocketItemDto.itemId })) }
-                pocketRepository.archivePocketItem(pocketItemDto)
+                setState { copy(items = Success(currentItems.filterNot { it.itemId == itemId })) }
+                pocketRepository.archivePocketItem(itemId)
                 loadPocketItems()
                 // TODO : display success status
-                // TODO : animate item dissmissal (is that possible?)
             } catch (ex: Throwable) {
                 // TODO : handle error properly
                 Timber.e(ex)
@@ -77,9 +73,46 @@ class PocketItemsListViewModel @AssistedInject constructor(
         }
     }
 
-    fun loadPocketItems() {
+    fun swapFavoriteStatus(itemId: String) {
+        viewModelScope.launch {
+            try {
+                val currentItems = awaitState().items() ?: return@launch
+                val item = currentItems.first { it.itemId == itemId }
+                val newItems = currentItems.map {
+                    if (it.itemId == itemId) {
+                        it.copy(favorite = !it.favorite)
+                    } else {
+                        it
+                    }
+                }
+                setState { copy(items = Success(newItems)) }
+
+                if (item.favorite) {
+                    pocketRepository.markItemAsNotFavorite(itemId)
+                } else {
+                    pocketRepository.markItemAsFavorite(itemId)
+                }
+                loadPocketItems()
+                // TODO : display success status
+            } catch (ex: Throwable) {
+                // TODO : handle error properly
+                Timber.e(ex)
+            }
+        }
+    }
+
+    fun loadPocketItems(manualRefresh: Boolean = false) {
         suspend {
-            pocketRepository.getPocketItems()
+            if (manualRefresh) {
+                setState { copy(manualRefresh = true) }
+            }
+            try {
+                pocketRepository.getPocketItems()
+            } finally {
+                if (manualRefresh) {
+                    setState { copy(manualRefresh = false) }
+                }
+            }
         }.execute(retainValue = PocketItemsListState::items) { copy(items = it) }
     }
 
