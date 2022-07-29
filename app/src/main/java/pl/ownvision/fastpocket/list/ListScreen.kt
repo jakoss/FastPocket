@@ -4,7 +4,6 @@ import android.content.Intent
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -30,8 +29,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
-import coil.compose.rememberImagePainter
-import com.airbnb.mvrx.*
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.airbnb.mvrx.Fail
+import com.airbnb.mvrx.Loading
+import com.airbnb.mvrx.Success
+import com.airbnb.mvrx.Uninitialized
 import com.airbnb.mvrx.compose.collectAsState
 import com.airbnb.mvrx.compose.mavericksViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -152,9 +155,7 @@ fun PocketItem(
     swapFavoriteStatus: () -> Unit = {},
 ) {
     val context = LocalContext.current
-    val title = if (pocketItem.resolvedTitle.isNotBlank()) {
-        pocketItem.resolvedTitle
-    } else {
+    val title = pocketItem.resolvedTitle.ifBlank {
         pocketItem.givenTitle
     }
 
@@ -195,15 +196,13 @@ fun PocketItem(
             },
             icon = image?.let {
                 {
-                    Image(
-                        painter = rememberImagePainter(
-                            data = it,
-                            builder = {
-                                crossfade(true)
-                            }
-                        ),
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(it)
+                            .crossfade(true)
+                            .build(),
                         contentDescription = null,
-                        Modifier
+                        modifier = Modifier
                             .size(64.dp)
                             .clip(RoundedCornerShape(8.dp))
                     )

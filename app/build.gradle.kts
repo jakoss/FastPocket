@@ -5,20 +5,19 @@ plugins {
     id("kotlin-android")
     id("kotlin-kapt")
     id("kotlin-parcelize")
-    kotlin("plugin.serialization") version "1.5.21"
+    kotlin("plugin.serialization") version "1.7.0"
     id("dagger.hilt.android.plugin")
 }
 
 android {
-    compileSdk = 30
-    buildToolsVersion = "30.0.3"
+    compileSdk = 32
 
     defaultConfig {
         applicationId = "pl.ownvision.fastpocket"
         minSdk = 21
-        targetSdk = 30
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 32
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -67,31 +66,25 @@ android {
     }
 }
 
-hilt {
-    enableAggregatingTask = false
-}
-
 dependencies {
-    implementation("androidx.appcompat:appcompat:1.3.0")
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
+    implementation("androidx.appcompat:appcompat:1.4.2")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.6")
 
     // Compose and AppCompat
-    implementation("androidx.activity:activity-compose:1.3.0-rc02")
+    implementation("androidx.activity:activity-compose:1.5.1")
     implementation("androidx.compose.ui:ui:${rootProject.extra["composeVersion"]}")
     implementation("androidx.compose.material:material:${rootProject.extra["composeVersion"]}")
     implementation("androidx.compose.material:material-icons-extended:${rootProject.extra["composeVersion"]}")
     implementation("androidx.compose.ui:ui-tooling:${rootProject.extra["composeVersion"]}")
 
-    implementation("androidx.core:core-ktx:1.7.0-alpha01")
-    implementation("androidx.datastore:datastore:1.0.0-rc01")
-    implementation("androidx.datastore:datastore-preferences:1.0.0-rc01")
-    implementation("com.google.android.material:material:1.4.0")
-    implementation("androidx.navigation:navigation-compose:2.4.0-alpha04")
+    implementation("androidx.core:core-ktx:1.8.0")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("com.google.android.material:material:1.6.1")
+    implementation("androidx.navigation:navigation-compose:2.5.0")
 
     // Accompanist
-    val accompanistVersion = "0.14.0"
+    val accompanistVersion = "0.25.0"
     implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
-    implementation("com.google.accompanist:accompanist-insets:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-swiperefresh:$accompanistVersion")
 
     // Dagger / Hilt
@@ -99,12 +92,12 @@ dependencies {
     kapt("com.google.dagger:hilt-android-compiler:${rootProject.extra["hiltVersion"]}")
 
     // Hilt binder
-    val hiltBinderVersion = "1.1.0"
+    val hiltBinderVersion = "1.1.2"
     implementation("com.paulrybitskyi:hilt-binder:$hiltBinderVersion")
     kapt("com.paulrybitskyi:hilt-binder-compiler:$hiltBinderVersion")
 
     // Lifecycle
-    val lifecycleKtxVersion = "2.3.1"
+    val lifecycleKtxVersion = "2.5.1"
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleKtxVersion")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleKtxVersion")
     implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
@@ -113,19 +106,19 @@ dependencies {
     implementation("com.michael-bull.kotlin-retry:kotlin-retry:1.0.8")
 
     // Mavericks
-    implementation("com.airbnb.android:mavericks:2.3.0")
-    implementation("com.airbnb.android:mavericks-compose:2.1.0-alpha02")
+    implementation("com.airbnb.android:mavericks:2.7.0")
+    implementation("com.airbnb.android:mavericks-compose:2.7.0")
 
     // Logging
-    implementation("com.jakewharton.timber:timber:4.7.1")
+    implementation("com.jakewharton.timber:timber:5.0.1")
 
     // Image handling
-    val coilVersion = "1.3.0"
+    val coilVersion = "2.1.0"
     implementation("io.coil-kt:coil:$coilVersion")
     implementation("io.coil-kt:coil-compose:$coilVersion")
 
     // Networking
-    api(platform("com.squareup.okhttp3:okhttp-bom:4.9.1"))
+    api(platform("com.squareup.okhttp3:okhttp-bom:4.10.0"))
     implementation("com.squareup.okhttp3:okhttp")
     implementation("com.squareup.okhttp3:okhttp-brotli")
 
@@ -134,17 +127,17 @@ dependencies {
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:0.8.0")
 
     // Niddler (network traffic inspector inside Android Studio)
-    val niddlerVersion = "1.5.5"
+    val niddlerVersion = "1.7.0"
     debugImplementation("com.chimerapps.niddler:niddler:$niddlerVersion")
     releaseImplementation("com.chimerapps.niddler:niddler-noop:$niddlerVersion")
 
     // Json serialization
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
 
     // Coroutines
-    val coroutinesVersion = "1.5.1"
+    val coroutinesVersion = "1.6.4"
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion")
 
     // Chrome web tabs
-    implementation("androidx.browser:browser:1.3.0")
+    implementation("androidx.browser:browser:1.4.0")
 }
